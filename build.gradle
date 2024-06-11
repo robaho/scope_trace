@@ -5,8 +5,6 @@ plugins {
 dependencies {
 }
 
-sourceSets.main.java.srcDirs = ['src']
-
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)

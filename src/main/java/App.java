@@ -14,6 +14,7 @@ public class App {
     }
 
     public void handleRequest() {
+        // the try-with-resources would be emitted by byte code injection
         try(final var timer = TraceContext.get().time("handleRequest")) {
             callServer();
         }
