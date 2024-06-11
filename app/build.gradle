@@ -1,0 +1,21 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.withType(JavaCompile).each {
+    it.options.compilerArgs.add('--enable-preview')
+}
+
+application {
+    mainClass = 'example.App'
+    applicationDefaultJvmArgs = ['--enable-preview']
+}

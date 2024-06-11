@@ -1,0 +1,7 @@
+{
+    "jdk.runConfig.vmOptions": "--enable-preview",
+    "jdk.serverVmOptions": [
+        "--enable-preview"
+    ],
+    "jdk.verbose": true
+}
