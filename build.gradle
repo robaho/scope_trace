@@ -5,6 +5,8 @@ plugins {
 dependencies {
 }
 
+sourceSets.main.java.srcDirs = ['src']
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
@@ -16,6 +18,6 @@ tasks.withType(JavaCompile).each {
 }
 
 application {
-    mainClass = 'example.App'
+    mainClass = 'App'
     applicationDefaultJvmArgs = ['--enable-preview']
 }
