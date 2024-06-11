@@ -6,6 +6,7 @@ public class TraceContext {
     
     private final List<Event> events = new LinkedList();
     private final long requestId;
+    private final long start = System.currentTimeMillis();
 
     private TraceContext(long requestId) {
         this.requestId = requestId;
@@ -27,14 +28,17 @@ public class TraceContext {
     }
     public record Event(long start,long end,String description){}
     public void dump() {
+        long end = System.currentTimeMillis();
         events.stream().forEach(e -> System.out.println("request "+requestId+", event "+e+", duration "+(e.end-e.start)+"ms"));
+        System.out.println("request "+requestId+", total duration "+(end-start)+"ms");
     }
     public static TraceContext get() {
         return context.get();
     }
     public static Runnable traceRequest(long requestId,final Runnable r) {
+        final TraceContext _context = new TraceContext(requestId);
         return () -> {
-            ScopedValue.runWhere(context,new TraceContext(requestId),() -> {
+            ScopedValue.runWhere(context,_context,() -> {
                 r.run();
                 TraceContext.get().dump();
             });

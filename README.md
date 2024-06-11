@@ -3,22 +3,18 @@ Demonstrates using ScopedValue for tracing library.
 generate output similar to:
 
 ```
-request 841, event Event[start=1718117820928, end=1718117821023, description=method callServer], duration 95ms
-request 841, event Event[start=1718117820928, end=1718117821023, description=method handleRequest], duration 95ms
-request 993, event Event[start=1718117820930, end=1718117821024, description=method callServer], duration 94ms
-request 909, event Event[start=1718117820929, end=1718117821024, description=method callServer], duration 95ms
-request 909, event Event[start=1718117820929, end=1718117821024, description=method handleRequest], duration 95ms
-request 769, event Event[start=1718117820927, end=1718117821024, description=method callServer], duration 97ms
-request 769, event Event[start=1718117820927, end=1718117821024, description=method handleRequest], duration 97ms
-request 993, event Event[start=1718117820930, end=1718117821024, description=method handleRequest], duration 94ms
-request 944, event Event[start=1718117820929, end=1718117821024, description=method callServer], duration 95ms
-request 944, event Event[start=1718117820929, end=1718117821024, description=method handleRequest], duration 95ms
-request 857, event Event[start=1718117820928, end=1718117821025, description=method callServer], duration 97ms
-request 857, event Event[start=1718117820928, end=1718117821025, description=method handleRequest], duration 97ms
-request 844, event Event[start=1718117820928, end=1718117821026, description=method callServer], duration 98ms
-request 844, event Event[start=1718117820928, end=1718117821026, description=method handleRequest], duration 98ms
-request 915, event Event[start=1718117820929, end=1718117821026, description=method callServer], duration 97ms
-request 915, event Event[start=1718117820929, end=1718117821026, description=method handleRequest], duration 97ms
-request 781, event Event[start=1718117820927, end=1718117821026, description=method callServer], duration 99ms
-request 781, event Event[start=1718117820927, end=1718117821026, description=method handleRequest], duration 99ms
+request 915, total duration 121ms
+request 762, event Event[start=1718119287321, end=1718119287416, description=method handleRequest], duration 95ms
+request 762, total duration 171ms
+request 958, total duration 168ms
+request 890, event Event[start=1718119287322, end=1718119287416, description=method handleRequest], duration 94ms
+request 681, total duration 172ms
+request 890, total duration 169ms
+request 907, total duration 170ms
+request 835, event Event[start=1718119287322, end=1718119287417, description=method handleRequest], duration 95ms
+request 761, total duration 172ms
+request 544, total duration 130ms
+request 967, event Event[start=1718119287323, end=1718119287422, description=method handleRequest], duration 99ms
+request 967, total duration 174ms
+request 919, total duration 126ms
 ```
