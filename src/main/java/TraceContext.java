@@ -12,18 +12,19 @@ public class TraceContext {
         this.requestId = requestId;
     }
 
-    public Timer time(String method) {
-        return new Timer(method);
+    public Scope open(String method) {
+        return new Scope(method);
     }
-    public class Timer implements AutoCloseable {
+    public class Scope implements AutoCloseable {
         private final long start = System.currentTimeMillis();
         private final String method;
-        private Timer(String method) {
+        private Scope(String method) {
             this.method = method;
+            events.add(new Event(start,System.currentTimeMillis(),"open method "+method));
         }
         @Override
         public void close() {
-            events.add(new Event(start,System.currentTimeMillis(),"method "+method));
+            events.add(new Event(start,System.currentTimeMillis(),"close method "+method));
         }
     }
     public record Event(long start,long end,String description){}

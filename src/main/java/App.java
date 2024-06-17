@@ -6,19 +6,30 @@ import java.util.concurrent.locks.LockSupport;
 
 public class App {
     private static final Random RANDOM = new Random();
+
+    public void openCloseScope() {
+        var timer = TraceContext.get().open("openCloseScope");
+
+        // do some stuff
+        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(RANDOM.nextInt(100)));
+        
+        timer.close();
+    }
+
     public void callServer() {
         // the try-with-resources would be emitted by byte code injection
-        try(final var timer = TraceContext.get().time("callServer")) {
+        try(final var scope = TraceContext.get().open("callServer")) {
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(RANDOM.nextInt(100)));
         }
     }
 
     public void handleRequest() {
         // the try-with-resources would be emitted by byte code injection
-        try(final var timer = TraceContext.get().time("handleRequest")) {
+        try(final var scope = TraceContext.get().open("handleRequest")) {
             callServer();
         }
     }
+
 
     public static void main(String[] args) throws InterruptedException {
         App app = new App();
