@@ -16,46 +16,45 @@ public class TraceContext {
     };
     
     private final List<Event> events = new LinkedList();
-    private final long start = System.currentTimeMillis();
     private final static AtomicLong nextSpanId = new AtomicLong();
-    private Span currentSpan;
     private final Deque<Span> stack = new ArrayDeque<>();
 
     private TraceContext() {
     }
+    /** open a new span with a parent of the current span */
     public Span open(String method) {
-        return new Span(method);
-    }
-    public Span next(String method) {
         Span span = new Span(method);
         stack.push(span);
         return span;
     }
-    public Span remove() {
-        return stack.pop();
+    private void finish() {
+        Span span = stack.pop();
+        span.closeEvent();
     }
+    /** obtain a reference to the current span */
     public Span current() {
-        return currentSpan;
+        return stack.peek();
     }
     void event(String description) {
         final long now = System.currentTimeMillis();
-        events.add(new Event(now,now,description,currentSpan));
+        events.add(new Event(now,now,description,current()));
     }
     public class Span implements AutoCloseable {
         private final long start = System.currentTimeMillis();
         private final String method;
-        private final Span parentSpan = currentSpan;
+        private final Span parentSpan = current();
         private final long spanId = nextSpanId.incrementAndGet();
         public final Set<String> tags = new LinkedHashSet<>();
         private Span(String method) {
             this.method = method;
             events.add(new Event(start,System.currentTimeMillis(),"open span "+method,this));
-            currentSpan = this;
+        }
+        private void closeEvent() {
+            events.add(new Event(start,System.currentTimeMillis(),"close span "+method,this));
         }
         @Override
         public void close() {
-            events.add(new Event(start,System.currentTimeMillis(),"close span "+method,this));
-            currentSpan = parentSpan;
+            TraceContext.this.finish();
         }
         public long spanId() {
             return spanId;
