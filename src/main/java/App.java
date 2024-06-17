@@ -8,7 +8,7 @@ public class App {
     private static final Random RANDOM = new Random();
 
     public void openCloseScope() {
-        var scope = TraceContext.get().open("openCloseScope");
+        var scope = TraceContext.get().open("myScope");
 
         callServer();
         callServer2();
