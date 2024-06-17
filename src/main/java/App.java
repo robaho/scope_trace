@@ -8,11 +8,12 @@ public class App {
     private static final Random RANDOM = new Random();
 
     private void beforeStatement() {
-       TraceContext.get().pushScope("making jdbc call");
+       var span = TraceContext.get().next("making jdbc call");
+       span.tags.add("jdbc");
     }
 
     private void afterStatement() {
-        TraceContext.get().popScope().close();
+        TraceContext.get().remove().close();
     }
 
     public void callJdbc() {
