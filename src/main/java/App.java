@@ -36,16 +36,17 @@ public class App {
         }
     }
 
-    public void handleRequest(Request request) {
+    record Request(long id){}
+
+    private void handleRequest(Request request) {
         // the try-with-resources would be emitted by byte code injection
         try(final var scope = TraceContext.get().open("handleRequest")) {
+            scope.tags.add("request "+request.id);
             callServer();
             callServer2();
             callJdbc();
         }
     }
-
-    record Request(long id){}
 
     public static void main(String[] args) throws InterruptedException {
         App app = new App();
@@ -53,7 +54,7 @@ public class App {
         for(int i=0;i<1000;i++) {
             final long id = i;
             // this is the only change required to setup the context at the start of a request
-            server.execute(TraceContext.traceRequest(id,() ->  app.handleRequest(new Request(id))));
+            server.execute(TraceContext.traceRequest(() ->  app.handleRequest(new Request(id))));
         }
         for(int i=0;i<1000;i++) {
             final long id = i;

@@ -11,19 +11,17 @@ public class TraceContext {
     private static final ThreadLocal<TraceContext> local = new ThreadLocal<>() {
         @Override
         protected TraceContext initialValue() {
-            return new TraceContext(Thread.currentThread().threadId());
+            return new TraceContext();
         }
     };
     
     private final List<Event> events = new LinkedList();
-    private final long requestId;
     private final long start = System.currentTimeMillis();
     private final static AtomicLong nextSpanId = new AtomicLong();
     private Span currentSpan;
     private final Deque<Span> stack = new ArrayDeque<>();
 
-    private TraceContext(long requestId) {
-        this.requestId = requestId;
+    private TraceContext() {
     }
     public Span open(String method) {
         return new Span(method);
@@ -39,12 +37,9 @@ public class TraceContext {
     public Span current() {
         return currentSpan;
     }
-    public long parentSpanId() {
-        return currentSpan==null ? -1 : currentSpan.parentSpan!=null ? currentSpan.parentSpan.spanId() : -1;
-    }
     void event(String description) {
         final long now = System.currentTimeMillis();
-        events.add(new Event(now,now,description,current().spanId,currentSpan.parentSpan.spanId()));
+        events.add(new Event(now,now,description,currentSpan));
     }
     public class Span implements AutoCloseable {
         private final long start = System.currentTimeMillis();
@@ -54,29 +49,34 @@ public class TraceContext {
         public final Set<String> tags = new LinkedHashSet<>();
         private Span(String method) {
             this.method = method;
-            events.add(new Event(start,System.currentTimeMillis(),"open span "+method,spanId,parentSpanId()));
+            events.add(new Event(start,System.currentTimeMillis(),"open span "+method,this));
             currentSpan = this;
         }
         @Override
         public void close() {
-            events.add(new Event(start,System.currentTimeMillis(),"close span "+method,spanId,parentSpanId()));
+            events.add(new Event(start,System.currentTimeMillis(),"close span "+method,this));
             currentSpan = parentSpan;
         }
         public long spanId() {
             return spanId;
         }
+        private long parentSpanId() {
+            return parentSpan==null ? -1 : parentSpan.spanId();
+        }
+        @Override
+        public String toString() {
+            return "SpanID "+spanId+", tags "+tags+",parent SpanId "+parentSpanId();
+        }
     }
-    public record Event(long start,long end,String description,long spanId,long parentSpanId){}
+    public record Event(long start,long end,String description,Span span){}
     public void dump() {
-        long end = System.currentTimeMillis();
-        events.stream().forEach(e -> System.out.println("request "+requestId+", event "+e+", duration "+(e.end-e.start)+"ms"));
-        System.out.println("request "+requestId+", total duration "+(end-start)+"ms");
+        events.stream().forEach(e -> System.out.println("event "+e+", duration "+(e.end-e.start)+"ms"));
     }
     public static TraceContext get() {
         return context.orElse(local.get());
     }
-    public static Runnable traceRequest(long requestId,final Runnable r) {
-        final TraceContext _context = new TraceContext(requestId);
+    public static Runnable traceRequest(final Runnable r) {
+        final TraceContext _context = new TraceContext();
         return () -> {
             ScopedValue.runWhere(context,_context,() -> {
                 r.run();
