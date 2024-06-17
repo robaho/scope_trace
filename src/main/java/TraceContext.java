@@ -8,6 +8,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class TraceContext {
     private static final ScopedValue<TraceContext> context = ScopedValue.newInstance();
+    private static final ThreadLocal<TraceContext> local = new ThreadLocal<>() {
+        @Override
+        protected TraceContext initialValue() {
+            return new TraceContext(Thread.currentThread().threadId());
+        }
+    };
     
     private final List<Event> events = new LinkedList();
     private final long requestId;
@@ -67,7 +73,7 @@ public class TraceContext {
         System.out.println("request "+requestId+", total duration "+(end-start)+"ms");
     }
     public static TraceContext get() {
-        return context.get();
+        return context.orElse(local.get());
     }
     public static Runnable traceRequest(long requestId,final Runnable r) {
         final TraceContext _context = new TraceContext(requestId);

@@ -36,7 +36,7 @@ public class App {
         }
     }
 
-    public void handleRequest() {
+    public void handleRequest(Request request) {
         // the try-with-resources would be emitted by byte code injection
         try(final var scope = TraceContext.get().open("handleRequest")) {
             callServer();
@@ -45,12 +45,20 @@ public class App {
         }
     }
 
+    record Request(long id){}
+
     public static void main(String[] args) throws InterruptedException {
         App app = new App();
         ExecutorService server = Executors.newVirtualThreadPerTaskExecutor();
         for(int i=0;i<1000;i++) {
+            final long id = i;
             // this is the only change required to setup the context at the start of a request
-            server.execute(TraceContext.traceRequest(i,() ->  app.handleRequest()));
+            server.execute(TraceContext.traceRequest(id,() ->  app.handleRequest(new Request(id))));
+        }
+        for(int i=0;i<1000;i++) {
+            final long id = i;
+            // this is the only change required to setup the context at the start of a request
+            server.execute(() ->  app.handleRequest(new Request(id)));
         }
         server.shutdown();
         server.awaitTermination(30, TimeUnit.SECONDS);
