@@ -64,7 +64,7 @@ public class TraceContext {
         }
         @Override
         public String toString() {
-            return "SpanID "+spanId+", tags "+tags+",parent SpanId "+parentSpanId();
+            return ""+spanId+", tags "+tags+", parent "+parentSpanId();
         }
     }
     public record Event(long start,long end,String description,Span span){}
