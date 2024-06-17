@@ -7,13 +7,19 @@ import java.util.concurrent.locks.LockSupport;
 public class App {
     private static final Random RANDOM = new Random();
 
-    public void openCloseScope() {
-        var scope = TraceContext.get().open("myScope");
+    private void beforeStatement() {
+       TraceContext.get().pushScope("making jdbc call");
+    }
 
-        callServer();
-        callServer2();
-        
-        scope.close();
+    private void afterStatement() {
+        TraceContext.get().popScope().close();
+    }
+
+    public void callJdbc() {
+        beforeStatement();
+        // do jdbc call
+        TraceContext.get().event("call jdbc");
+        afterStatement();
     }
 
     public void callServer() {
@@ -32,10 +38,11 @@ public class App {
     public void handleRequest() {
         // the try-with-resources would be emitted by byte code injection
         try(final var scope = TraceContext.get().open("handleRequest")) {
-            openCloseScope();
+            callServer();
+            callServer2();
+            callJdbc();
         }
     }
-
 
     public static void main(String[] args) throws InterruptedException {
         App app = new App();
