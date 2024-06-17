@@ -20,11 +20,11 @@ public class TraceContext {
         private final String method;
         private Scope(String method) {
             this.method = method;
-            events.add(new Event(start,System.currentTimeMillis(),"open method "+method));
+            events.add(new Event(start,System.currentTimeMillis(),"open scope "+method));
         }
         @Override
         public void close() {
-            events.add(new Event(start,System.currentTimeMillis(),"close method "+method));
+            events.add(new Event(start,System.currentTimeMillis(),"close scope "+method));
         }
     }
     public record Event(long start,long end,String description){}

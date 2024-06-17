@@ -8,12 +8,11 @@ public class App {
     private static final Random RANDOM = new Random();
 
     public void openCloseScope() {
-        var timer = TraceContext.get().open("openCloseScope");
+        var scope = TraceContext.get().open("openCloseScope");
 
-        // do some stuff
-        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(RANDOM.nextInt(100)));
+        callServer();
         
-        timer.close();
+        scope.close();
     }
 
     public void callServer() {
@@ -26,7 +25,7 @@ public class App {
     public void handleRequest() {
         // the try-with-resources would be emitted by byte code injection
         try(final var scope = TraceContext.get().open("handleRequest")) {
-            callServer();
+            openCloseScope();
         }
     }
 
@@ -38,6 +37,7 @@ public class App {
             // this is the only change required to setup the context at the start of a request
             server.execute(TraceContext.traceRequest(i,() ->  app.handleRequest()));
         }
+        server.shutdown();
         server.awaitTermination(30, TimeUnit.SECONDS);
     }
 }
