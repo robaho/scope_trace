@@ -11,6 +11,7 @@ public class App {
         var scope = TraceContext.get().open("openCloseScope");
 
         callServer();
+        callServer2();
         
         scope.close();
     }
@@ -18,6 +19,12 @@ public class App {
     public void callServer() {
         // the try-with-resources would be emitted by byte code injection
         try(final var scope = TraceContext.get().open("callServer")) {
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(RANDOM.nextInt(100)));
+        }
+    }
+    public void callServer2() {
+        // the try-with-resources would be emitted by byte code injection
+        try(final var scope = TraceContext.get().open("callServer2")) {
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(RANDOM.nextInt(100)));
         }
     }
