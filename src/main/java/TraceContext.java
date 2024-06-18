@@ -85,7 +85,9 @@ public class TraceContext {
         }
     }
     public void dump() {
-        events.stream().forEach(e -> System.out.println(e.toString()));
+        if(parent==null) { // events are gathered in parent, so avoid duplicate logging
+            events.stream().forEach(e -> System.out.println(e.toString()));
+        }
     }
     public static TraceContext get() {
         return context.orElse(null);
