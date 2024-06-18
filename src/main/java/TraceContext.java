@@ -1,25 +1,36 @@
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TraceContext {
+
     private static final ScopedValue<TraceContext> context = ScopedValue.newInstance();
-    private static final ThreadLocal<TraceContext> local = new ThreadLocal<>() {
-        @Override
-        protected TraceContext initialValue() {
-            return new TraceContext();
-        }
-    };
+
+    <U> Callable<? extends U> trace(Callable<? extends U> task) {
+        return () -> ScopedValue.callWhere(context,new TraceContext(this), task);
+    }
     
-    private final List<Event> events = new LinkedList();
+    private final Queue<Event> events;
     private final static AtomicLong nextSpanId = new AtomicLong();
     private final Deque<Span> stack = new ArrayDeque<>();
+    private final TraceContext parent;
+    private final long parentSpanId;
 
-    private TraceContext() {
+    public TraceContext() {
+        this.events = new ConcurrentLinkedQueue<>();
+        this.parent=null;
+        this.parentSpanId = -1;
+    }
+    public TraceContext(TraceContext parent) {
+        this.parent = parent;
+        this.parentSpanId = parent.current().spanId;
+        this.events = parent.events;
     }
     /** open a new span with a parent of the current span */
     public Span open(String method) {
@@ -33,11 +44,11 @@ public class TraceContext {
     }
     /** obtain a reference to the current span */
     public Span current() {
-        return stack.peek();
+        return Optional.ofNullable(stack.peek()).orElse(parent!=null ? parent.current():null);
     }
     void event(String description) {
         final long now = System.currentTimeMillis();
-        events.add(new Event(now,now,description,current()));
+        events.add(new Event(now,now,current(),description));
     }
     public class Span implements AutoCloseable {
         private final long start = System.currentTimeMillis();
@@ -47,10 +58,10 @@ public class TraceContext {
         public final Set<String> tags = new LinkedHashSet<>();
         private Span(String method) {
             this.method = method;
-            events.add(new Event(start,System.currentTimeMillis(),"open span "+method,this));
+            events.add(new Event(start,System.currentTimeMillis(),this,"open "+method));
         }
         private void closeEvent() {
-            events.add(new Event(start,System.currentTimeMillis(),"close span "+method,this));
+            events.add(new Event(start,System.currentTimeMillis(),this,"close "+method));
         }
         @Override
         public void close() {
@@ -60,27 +71,24 @@ public class TraceContext {
             return spanId;
         }
         private long parentSpanId() {
-            return parentSpan==null ? -1 : parentSpan.spanId();
+            return parentSpan==null ? parentSpanId : parentSpan.spanId();
         }
         @Override
         public String toString() {
-            return ""+spanId+", tags "+tags+", parent "+parentSpanId();
+            return "span "+spanId+", tags "+tags+", parent "+parentSpanId();
         }
     }
-    public record Event(long start,long end,String description,Span span){}
+    public record Event(long start,long end,Span span,String description){
+        @Override
+        public String toString() {
+            return "Event[@"+start+" for "+(end-start)+"ms, "+span+", \""+description+"\"";
+        }
+    }
     public void dump() {
-        events.stream().forEach(e -> System.out.println("event "+e+", duration "+(e.end-e.start)+"ms"));
+        events.stream().forEach(e -> System.out.println(e.toString()));
     }
     public static TraceContext get() {
-        return context.orElse(local.get());
-    }
-    public static Runnable traceRequest(final Runnable r) {
-        final TraceContext _context = new TraceContext();
-        return () -> {
-            ScopedValue.runWhere(context,_context,() -> {
-                r.run();
-                TraceContext.get().dump();
-            });
-        };
+        return context.orElse(null);
     }
 }
+
